@@ -66,7 +66,7 @@ const speechVoice = ()=>{
     })().then(stream => {
         const chunks = [];
         handler.recorder && handler.recorder.stop();
-        const recorder = handler.recorder || new MediaRecorder(stream);
+        const recorder = handler.recorder || new MediaRecorder(stream,{type:'audio/wav'});
         recorder.ondataavailable = (event)=>{
             isRecording.value = true;
             chunks.push(event.data);
