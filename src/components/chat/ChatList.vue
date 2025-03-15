@@ -75,13 +75,9 @@ const speechVoice = ()=>{
         handler.recorder = recorder;
         handler.stop = () => new Promise(function(resolve,reject){
             recorder.stop();
-            recorder.onstop = ()=> {
-                const reader = new FileReader();
-                reader.readAsArrayBuffer(chunks[0]);
-                reader.onload = async (e)=>{
-                    // const ab = await audioContext.decodeAudioData(e.target.result);
-                    resolve(e.target.result);
-                }
+            recorder.onstop = async ()=> {
+                const ab = await chunks[0].arrayBuffer();
+                resolve(ab);
             }
         })
     }).catch(err => {

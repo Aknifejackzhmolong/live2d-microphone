@@ -12658,12 +12658,9 @@ const _sfc_main$4 = {
         handler.recorder = recorder;
         handler.stop = () => new Promise(function(resolve2, reject) {
           recorder.stop();
-          recorder.onstop = () => {
-            const reader = new FileReader();
-            reader.readAsArrayBuffer(chunks[0]);
-            reader.onload = async (e) => {
-              resolve2(e.target.result);
-            };
+          recorder.onstop = async () => {
+            const ab = await chunks[0].arrayBuffer();
+            resolve2(ab);
           };
         });
       }).catch((err) => {
