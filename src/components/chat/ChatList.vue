@@ -19,7 +19,7 @@
 
 
         <section class="foot">
-          <button style="width: 100%" type="primary" @touchstart.native="speechVoice" @touchend.native="stopVoice" @contextmenu.native="handlecontextmenu">按住说话({{sampleRate}}kHz)</button>
+          <ElButton style="width: 100%" type="primary" @touchstart.native="speechVoice" @touchend.native="stopVoice" @contextmenu.native="handlecontextmenu">按住说话({{sampleRate}}kHz)</ElButton>
         </section>
 
 
@@ -30,6 +30,8 @@
 import util from '../../utils/helper'
 import Recorder from 'recorder-js'
 import { WaveFileLoader, exportWAV16k } from '../../utils/WaveFileLoader'
+import { ElButton } from "element-plus"
+import 'element-plus/es/components/button/style/css'
 
 const audioContext =  new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
 console.log(audioContext)
@@ -50,6 +52,9 @@ function download() {
 }
 export default {
     name: 'chatlist',
+    components: {
+        ElButton
+    },
     data() {
         return {
             selFace: '表情',
