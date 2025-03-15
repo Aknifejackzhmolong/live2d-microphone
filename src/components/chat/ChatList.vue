@@ -30,8 +30,9 @@
 import util from '../../utils/helper'
 import Recorder from 'recorder-js'
 import { WaveFileLoader, exportWAV16k } from '../../utils/WaveFileLoader'
-import { ElButton } from "element-plus"
+import { ElButton,ElMessageBox } from "element-plus"
 import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/message-box/style/css'
 
 const audioContext =  new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
 console.log(audioContext)
@@ -44,12 +45,11 @@ const recorder = new Recorder(audioContext, {
 
 navigator.mediaDevices.getUserMedia({audio: true})
   .then(stream => recorder.init(stream))
-  .catch(err => console.log('Uh oh... unable to get stream...', err));
+  .catch(err => {
+    console.log('Uh oh... unable to get stream...', err)
+    ElMessageBox.confirm(err+'','Error')
+  });
 
-
-function download() {
-  Recorder.download(blob, 'my-audio-file'); // downloads a .wav file
-}
 export default {
     name: 'chatlist',
     components: {
