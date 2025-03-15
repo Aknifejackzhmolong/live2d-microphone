@@ -12696,8 +12696,11 @@ const _sfc_main$4 = {
         handler.stop = () => new Promise(function(resolve2, reject) {
           recorder.stop();
           recorder.onstop = () => {
-            console.log("chunks", chunks);
-            resolve2(new ArrayBuffer(chunks));
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(chunks[0]);
+            reader.onload = (e) => {
+              resolve2(e.target.result);
+            };
           };
         });
       }).catch((err) => {
@@ -12708,9 +12711,9 @@ const _sfc_main$4 = {
     const stopVoice = () => {
       ElMessage("touchend");
       handler.stop().then((buffer) => {
-        console.log(buffer);
+        console.log(new WaveFileLoader(buffer));
         ElMessage("download");
-        let audio = new Blob([exportWAV16k(buffer[0])], { type: "audio/wav" });
+        let audio = new Blob([exportWAV16k(buffer)], { type: "audio/wav" });
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);
         a.download = `record-${this.sampleRate}kHz.wav`;

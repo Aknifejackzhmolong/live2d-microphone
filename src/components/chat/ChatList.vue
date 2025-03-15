@@ -29,7 +29,7 @@
 <script setup>
 import { ref } from 'vue';
 import util from '../../utils/helper'
-import { exportWAV16k } from '../../utils/WaveFileLoader'
+import { WaveFileLoader,exportWAV16k } from '../../utils/WaveFileLoader'
 import { ElButton,ElMessage,ElMessageBox } from "element-plus"
 import 'element-plus/es/components/button/style/css'
 import 'element-plus/es/components/message/style/css'
@@ -76,8 +76,11 @@ const speechVoice = ()=>{
         handler.stop = () => new Promise(function(resolve,reject){
             recorder.stop();
             recorder.onstop = ()=> {
-                console.log('chunks',chunks);
-                resolve(new ArrayBuffer(chunks));
+                const reader = new FileReader();
+                reader.readAsArrayBuffer(chunks[0]);
+                reader.onload = (e)=>{
+                    resolve(e.target.result);
+                }
             }
         })
     }).catch(err => {
@@ -90,9 +93,9 @@ const stopVoice = ()=>{
     // buffer is an AudioBuffer(Float32Array ArrayBuffer)
     handler.stop()
     .then((buffer) => {
-        console.log(buffer);
+        console.log(new WaveFileLoader(buffer));
         ElMessage('download');
-        let audio = new Blob([exportWAV16k(buffer[0])],{type:'audio/wav'});
+        let audio = new Blob([exportWAV16k(buffer)],{type:'audio/wav'});
         const a = document.createElement('a');
         a.href = window.URL.createObjectURL(audio);
         a.download = `record-${this.sampleRate}kHz.wav`;
