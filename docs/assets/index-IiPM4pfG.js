@@ -13162,7 +13162,7 @@ const _sfc_main$4 = {
     stopVoice() {
       ElMessage("touchend");
       recorder.stop().then(({ blob, buffer }) => {
-        ElMessage("download", blob);
+        ElMessage("download");
         let audio = new Blob([exportWAV16k(buffer[0])], "audio/wav");
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);
@@ -13192,6 +13192,8 @@ const _sfc_main$4 = {
             });
           }
         });
+      }).catch((e) => {
+        ElMessage(e);
       });
     },
     handlecontextmenu(e) {

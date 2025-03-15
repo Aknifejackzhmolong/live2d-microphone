@@ -127,7 +127,7 @@ export default {
           // buffer is an AudioBuffer(Float32Array ArrayBuffer)
           recorder.stop()
             .then(({blob, buffer}) => {
-                ElMessage('download',blob);
+                ElMessage('download');
                 let audio = new Blob([exportWAV16k(buffer[0])],'audio/wav');
                 const a = document.createElement('a');
                 a.href = window.URL.createObjectURL(audio);
@@ -154,7 +154,7 @@ export default {
                 })
                 return this.$axios.get('/talk?content='+encodeURIComponent(data.join(',')))
             }).then(({data:{results}})=>{
-            const records = this.records
+                const records = this.records
                 results.forEach(group=>{
                     if (['text'].indexOf(group.resultType) > -1){
                         records.push({
@@ -165,6 +165,8 @@ export default {
                         })
                     }
                 })
+            }).catch(e=>{
+                ElMessage(e);
             });
         },
         handlecontextmenu(e) {
