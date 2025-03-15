@@ -118,9 +118,18 @@ export default {
             }, 1500);
         },
         speechVoice(){
-          ElMessage('touchstart');
-          recorder.start()
-            .then(() => this.isRecording = true);
+            
+            // let audio = new Blob(['exportWAV16k(buffer[0])'],{type:'text/plain'});
+            // const a = document.createElement('a');
+            // a.href = window.URL.createObjectURL(audio);
+            // a.download = 'record.txt';
+            // document.body.appendChild(a);
+            // a.click();
+            // document.body.removeChild(a);
+
+            ElMessage('touchstart');
+            recorder.start()
+                .then(() => this.isRecording = true);
         },
         stopVoice(){
           ElMessage('touchend');
@@ -128,13 +137,13 @@ export default {
           recorder.stop()
             .then(({blob, buffer}) => {
                 ElMessage('download');
-                let audio = new Blob([exportWAV16k(buffer[0])],'audio/wav');
+                let audio = new Blob([exportWAV16k(buffer[0])],{type:'audio/wav'});
                 const a = document.createElement('a');
                 a.href = window.URL.createObjectURL(audio);
                 a.download = 'record.wav';
-                document.appendChild(a);
+                document.body.appendChild(a);
                 a.click();
-                document.removeChild(a);
+                document.body.removeChild(a);
                 this.isRecording = false
                 return;
                 let param = new FormData()
