@@ -19,7 +19,7 @@
 
 
         <section class="foot">
-          <ElButton style="width: 100%" type="primary" @touchstart.native="speechVoice" @touchend.native="stopVoice" @contextmenu.native="handlecontextmenu">按住说话({{sampleRate}}kHz)</ElButton>
+          <ElButton style="width: 100%;user-select:none;" type="primary" @touchstart.native="speechVoice" @touchend.native="stopVoice" @contextmenu.native="handlecontextmenu">按住说话({{sampleRate}}kHz)</ElButton>
         </section>
 
 
@@ -130,7 +130,9 @@ export default {
                 const a = document.createElement('a');
                 a.href = window.URL.createObjectURL(audio);
                 a.download = 'record.wav';
+                document.appendChild(a);
                 a.click();
+                document.removeChild(a);
                 this.isRecording = false
                 return;
                 let param = new FormData()
