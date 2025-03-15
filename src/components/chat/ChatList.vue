@@ -76,6 +76,7 @@ const speechVoice = ()=>{
         handler.stop = () => new Promise(function(resolve,reject){
             recorder.stop();
             recorder.onstop = ()=> {
+                console.log('chunks',chunks);
                 resolve(new ArrayBuffer(chunks));
             }
         })
@@ -89,6 +90,7 @@ const stopVoice = ()=>{
     // buffer is an AudioBuffer(Float32Array ArrayBuffer)
     handler.stop()
     .then((buffer) => {
+        console.log(buffer);
         ElMessage('download');
         let audio = new Blob([exportWAV16k(buffer[0])],{type:'audio/wav'});
         const a = document.createElement('a');
@@ -96,7 +98,6 @@ const stopVoice = ()=>{
         a.download = `record-${this.sampleRate}kHz.wav`;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         this.isRecording = false
         return;
         let param = new FormData()

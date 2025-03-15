@@ -12696,6 +12696,7 @@ const _sfc_main$4 = {
         handler.stop = () => new Promise(function(resolve2, reject) {
           recorder.stop();
           recorder.onstop = () => {
+            console.log("chunks", chunks);
             resolve2(new ArrayBuffer(chunks));
           };
         });
@@ -12707,6 +12708,7 @@ const _sfc_main$4 = {
     const stopVoice = () => {
       ElMessage("touchend");
       handler.stop().then((buffer) => {
+        console.log(buffer);
         ElMessage("download");
         let audio = new Blob([exportWAV16k(buffer[0])], { type: "audio/wav" });
         const a = document.createElement("a");
@@ -12714,7 +12716,6 @@ const _sfc_main$4 = {
         a.download = `record-${this.sampleRate}kHz.wav`;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         this.isRecording = false;
         return;
       }).then(({ data }) => {
