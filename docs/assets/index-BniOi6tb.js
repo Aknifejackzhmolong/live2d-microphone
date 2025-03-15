@@ -6698,7 +6698,7 @@ function autoPrefix(style, rawName) {
   return rawName;
 }
 const xlinkNS = "http://www.w3.org/1999/xlink";
-function patchAttr(el, key, value, isSVG, instance, isBoolean = isSpecialBooleanAttr(key)) {
+function patchAttr(el, key, value, isSVG, instance, isBoolean2 = isSpecialBooleanAttr(key)) {
   if (isSVG && key.startsWith("xlink:")) {
     if (value == null) {
       el.removeAttributeNS(xlinkNS, key.slice(6, key.length));
@@ -6706,12 +6706,12 @@ function patchAttr(el, key, value, isSVG, instance, isBoolean = isSpecialBoolean
       el.setAttributeNS(xlinkNS, key, value);
     }
   } else {
-    if (value == null || isBoolean && !includeBooleanAttr(value)) {
+    if (value == null || isBoolean2 && !includeBooleanAttr(value)) {
       el.removeAttribute(key);
     } else {
       el.setAttribute(
         key,
-        isBoolean ? "" : isSymbol$1(value) ? String(value) : value
+        isBoolean2 ? "" : isSymbol$1(value) ? String(value) : value
       );
     }
   }
@@ -7003,7 +7003,7 @@ const _export_sfc$1 = (sfc, props) => {
 };
 const _hoisted_1$2 = { class: "top" };
 const _hoisted_2$1 = { class: "voice" };
-const _sfc_main$b = {
+const _sfc_main$d = {
   __name: "Heads",
   setup(__props) {
     const vociceOpen = ref(true);
@@ -7025,7 +7025,7 @@ const _sfc_main$b = {
     };
   }
 };
-const Heads = /* @__PURE__ */ _export_sfc$1(_sfc_main$b, [["__scopeId", "data-v-bf23be05"]]);
+const Heads = /* @__PURE__ */ _export_sfc$1(_sfc_main$d, [["__scopeId", "data-v-bf23be05"]]);
 let SIGN_REGEXP = /([yMdhsm])(\1*)/g;
 let DEFAULT_PATTERN = "yyyy-MM-dd";
 function padding(s, len) {
@@ -8329,6 +8329,7 @@ var pick = flatRest(function(object, paths) {
   return object == null ? {} : basePick(object, paths);
 });
 const isUndefined = (val) => val === void 0;
+const isBoolean = (val) => typeof val === "boolean";
 const isNumber = (val) => typeof val === "number";
 const isElement = (e) => {
   if (typeof Element === "undefined")
@@ -8396,6 +8397,43 @@ function tryOnMounted(fn, sync = true) {
     fn();
   else
     nextTick(fn);
+}
+function useTimeoutFn(cb, interval, options = {}) {
+  const {
+    immediate = true
+  } = options;
+  const isPending = ref(false);
+  let timer = null;
+  function clear() {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+  function stop() {
+    isPending.value = false;
+    clear();
+  }
+  function start(...args) {
+    clear();
+    isPending.value = true;
+    timer = setTimeout(() => {
+      isPending.value = false;
+      timer = null;
+      cb(...args);
+    }, resolveUnref(interval));
+  }
+  if (immediate) {
+    isPending.value = true;
+    if (isClient)
+      start();
+  }
+  tryOnScopeDispose(stop);
+  return {
+    isPending: readonly(isPending),
+    start,
+    stop
+  };
 }
 var define_global_default = {};
 function unrefElement(elRef) {
@@ -8559,7 +8597,7 @@ class ElementPlusError extends Error {
 function throwError(scope, m) {
   throw new ElementPlusError(`[${scope}] ${m}`);
 }
-function debugWarn(scope, message) {
+function debugWarn(scope, message2) {
 }
 const initial = {
   current: 0
@@ -8839,7 +8877,7 @@ const useGlobalSize = () => {
   });
 };
 const emptyValuesContextKey = Symbol("emptyValuesContextKey");
-buildProps({
+const useEmptyValuesProps = buildProps({
   emptyValues: Array,
   valueOnClear: {
     type: [String, Number, Boolean, Function],
@@ -9013,6 +9051,13 @@ const withInstall = (main, extra) => {
   }
   return main;
 };
+const withInstallFunction = (fn, name) => {
+  fn.install = (app) => {
+    fn._context = app._context;
+    app.config.globalProperties[name] = fn;
+  };
+  return fn;
+};
 const withNoopInstall = (component) => {
   component.install = NOOP;
   return component;
@@ -9025,12 +9070,12 @@ const iconProps = buildProps({
     type: String
   }
 });
-const __default__$3 = /* @__PURE__ */ defineComponent({
+const __default__$5 = /* @__PURE__ */ defineComponent({
   name: "ElIcon",
   inheritAttrs: false
 });
-const _sfc_main$a = /* @__PURE__ */ defineComponent({
-  ...__default__$3,
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
+  ...__default__$5,
   props: iconProps,
   setup(__props) {
     const props = __props;
@@ -9054,7 +9099,7 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var Icon = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["__file", "icon.vue"]]);
+var Icon = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__file", "icon.vue"]]);
 const ElIcon = withInstall(Icon);
 /*! Element Plus Icons Vue v2.3.1 */
 var circle_check_vue_vue_type_script_setup_true_lang_default = /* @__PURE__ */ defineComponent({
@@ -9664,12 +9709,12 @@ function useCursor(input) {
   }
   return [recordCursor, setCursor];
 }
-const __default__$2 = /* @__PURE__ */ defineComponent({
+const __default__$4 = /* @__PURE__ */ defineComponent({
   name: "ElInput",
   inheritAttrs: false
 });
-const _sfc_main$9 = /* @__PURE__ */ defineComponent({
-  ...__default__$2,
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
+  ...__default__$4,
   props: inputProps,
   emits: inputEmits,
   setup(__props, { expose, emit: emit2 }) {
@@ -10078,7 +10123,7 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var Input = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["__file", "input.vue"]]);
+var Input = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["__file", "input.vue"]]);
 const ElInput = withInstall(Input);
 const FOCUSABLE_ELEMENT_SELECTORS = `a[href],button:not([disabled]),button:not([hidden]),:not([tabindex="-1"]),input:not([disabled]),input:not([type="hidden"]),select:not([disabled]),textarea:not([disabled])`;
 const isVisible = (element) => {
@@ -10292,7 +10337,7 @@ const useEscapeKeydown = (handler) => {
     }
   });
 };
-const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+const _sfc_main$a = /* @__PURE__ */ defineComponent({
   name: "ElFocusTrap",
   inheritAttrs: false,
   props: {
@@ -10537,7 +10582,106 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
 function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
   return renderSlot(_ctx.$slots, "default", { handleKeydown: _ctx.onKeydown });
 }
-var ElFocusTrap = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$3], ["__file", "focus-trap.vue"]]);
+var ElFocusTrap = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$3], ["__file", "focus-trap.vue"]]);
+const badgeProps = buildProps({
+  value: {
+    type: [String, Number],
+    default: ""
+  },
+  max: {
+    type: Number,
+    default: 99
+  },
+  isDot: Boolean,
+  hidden: Boolean,
+  type: {
+    type: String,
+    values: ["primary", "success", "warning", "info", "danger"],
+    default: "danger"
+  },
+  showZero: {
+    type: Boolean,
+    default: true
+  },
+  color: String,
+  badgeStyle: {
+    type: definePropType([String, Object, Array])
+  },
+  offset: {
+    type: definePropType(Array),
+    default: [0, 0]
+  },
+  badgeClass: {
+    type: String
+  }
+});
+const __default__$3 = /* @__PURE__ */ defineComponent({
+  name: "ElBadge"
+});
+const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+  ...__default__$3,
+  props: badgeProps,
+  setup(__props, { expose }) {
+    const props = __props;
+    const ns = useNamespace("badge");
+    const content = computed(() => {
+      if (props.isDot)
+        return "";
+      if (isNumber(props.value) && isNumber(props.max)) {
+        return props.max < props.value ? `${props.max}+` : `${props.value}`;
+      }
+      return `${props.value}`;
+    });
+    const style = computed(() => {
+      var _a2, _b, _c, _d, _e;
+      return [
+        {
+          backgroundColor: props.color,
+          marginRight: addUnit(-((_b = (_a2 = props.offset) == null ? void 0 : _a2[0]) != null ? _b : 0)),
+          marginTop: addUnit((_d = (_c = props.offset) == null ? void 0 : _c[1]) != null ? _d : 0)
+        },
+        (_e = props.badgeStyle) != null ? _e : {}
+      ];
+    });
+    expose({
+      content
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: normalizeClass(unref(ns).b())
+      }, [
+        renderSlot(_ctx.$slots, "default"),
+        createVNode(Transition, {
+          name: `${unref(ns).namespace.value}-zoom-in-center`,
+          persisted: ""
+        }, {
+          default: withCtx(() => [
+            withDirectives(createBaseVNode("sup", {
+              class: normalizeClass([
+                unref(ns).e("content"),
+                unref(ns).em("content", _ctx.type),
+                unref(ns).is("fixed", !!_ctx.$slots.default),
+                unref(ns).is("dot", _ctx.isDot),
+                unref(ns).is("hide-zero", !_ctx.showZero && props.value === 0),
+                _ctx.badgeClass
+              ]),
+              style: normalizeStyle(unref(style))
+            }, [
+              renderSlot(_ctx.$slots, "content", { value: unref(content) }, () => [
+                createTextVNode(toDisplayString(unref(content)), 1)
+              ])
+            ], 6), [
+              [vShow, !_ctx.hidden && (unref(content) || _ctx.isDot || _ctx.$slots.content)]
+            ])
+          ]),
+          _: 3
+        }, 8, ["name"])
+      ], 2);
+    };
+  }
+});
+var Badge = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["__file", "badge.vue"]]);
+const ElBadge = withInstall(Badge);
 const buttonGroupContextKey = Symbol("buttonGroupContextKey");
 const useDeprecated = ({ from, replacement, scope, version: version2, ref: ref2, type = "API" }, condition) => {
   watch(() => unref(condition), (val) => {
@@ -11601,11 +11745,11 @@ function useButtonCustomStyle(props) {
     return styles;
   });
 }
-const __default__$1 = /* @__PURE__ */ defineComponent({
+const __default__$2 = /* @__PURE__ */ defineComponent({
   name: "ElButton"
 });
-const _sfc_main$7 = /* @__PURE__ */ defineComponent({
-  ...__default__$1,
+const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+  ...__default__$2,
   props: buttonProps,
   emits: buttonEmits,
   setup(__props, { expose, emit: emit2 }) {
@@ -11671,16 +11815,16 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var Button = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__file", "button.vue"]]);
+var Button = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__file", "button.vue"]]);
 const buttonGroupProps = {
   size: buttonProps.size,
   type: buttonProps.type
 };
-const __default__ = /* @__PURE__ */ defineComponent({
+const __default__$1 = /* @__PURE__ */ defineComponent({
   name: "ElButtonGroup"
 });
-const _sfc_main$6 = /* @__PURE__ */ defineComponent({
-  ...__default__,
+const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+  ...__default__$1,
   props: buttonGroupProps,
   setup(__props) {
     const props = __props;
@@ -11698,7 +11842,7 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var ButtonGroup = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__file", "button-group.vue"]]);
+var ButtonGroup = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__file", "button-group.vue"]]);
 const ElButton = withInstall(Button, {
   ButtonGroup
 });
@@ -11719,6 +11863,7 @@ var PatchFlags = /* @__PURE__ */ ((PatchFlags2) => {
   PatchFlags2[PatchFlags2["BAIL"] = -2] = "BAIL";
   return PatchFlags2;
 })(PatchFlags || {});
+const messageConfig = {};
 const useSameTarget = (handleClick) => {
   if (!handleClick) {
     return { onClick: NOOP, onMousedown: NOOP, onMouseup: NOOP };
@@ -11913,6 +12058,364 @@ const useLockscreen = (trigger2, options = {}) => {
   onScopeDispose(() => cleanup());
 };
 const isValidComponentSize = (val) => ["", ...componentSizes].includes(val);
+const messageTypes = ["success", "info", "warning", "error"];
+const messageDefaults = mutable({
+  customClass: "",
+  center: false,
+  dangerouslyUseHTMLString: false,
+  duration: 3e3,
+  icon: void 0,
+  id: "",
+  message: "",
+  onClose: void 0,
+  showClose: false,
+  type: "info",
+  plain: false,
+  offset: 16,
+  zIndex: 0,
+  grouping: false,
+  repeatNum: 1,
+  appendTo: isClient ? document.body : void 0
+});
+const messageProps = buildProps({
+  customClass: {
+    type: String,
+    default: messageDefaults.customClass
+  },
+  center: {
+    type: Boolean,
+    default: messageDefaults.center
+  },
+  dangerouslyUseHTMLString: {
+    type: Boolean,
+    default: messageDefaults.dangerouslyUseHTMLString
+  },
+  duration: {
+    type: Number,
+    default: messageDefaults.duration
+  },
+  icon: {
+    type: iconPropType,
+    default: messageDefaults.icon
+  },
+  id: {
+    type: String,
+    default: messageDefaults.id
+  },
+  message: {
+    type: definePropType([
+      String,
+      Object,
+      Function
+    ]),
+    default: messageDefaults.message
+  },
+  onClose: {
+    type: definePropType(Function),
+    default: messageDefaults.onClose
+  },
+  showClose: {
+    type: Boolean,
+    default: messageDefaults.showClose
+  },
+  type: {
+    type: String,
+    values: messageTypes,
+    default: messageDefaults.type
+  },
+  plain: {
+    type: Boolean,
+    default: messageDefaults.plain
+  },
+  offset: {
+    type: Number,
+    default: messageDefaults.offset
+  },
+  zIndex: {
+    type: Number,
+    default: messageDefaults.zIndex
+  },
+  grouping: {
+    type: Boolean,
+    default: messageDefaults.grouping
+  },
+  repeatNum: {
+    type: Number,
+    default: messageDefaults.repeatNum
+  }
+});
+const messageEmits = {
+  destroy: () => true
+};
+const instances = shallowReactive([]);
+const getInstance = (id) => {
+  const idx = instances.findIndex((instance) => instance.id === id);
+  const current = instances[idx];
+  let prev;
+  if (idx > 0) {
+    prev = instances[idx - 1];
+  }
+  return { current, prev };
+};
+const getLastOffset = (id) => {
+  const { prev } = getInstance(id);
+  if (!prev)
+    return 0;
+  return prev.vm.exposed.bottom.value;
+};
+const getOffsetOrSpace = (id, offset) => {
+  const idx = instances.findIndex((instance) => instance.id === id);
+  return idx > 0 ? 16 : offset;
+};
+const __default__ = /* @__PURE__ */ defineComponent({
+  name: "ElMessage"
+});
+const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+  ...__default__,
+  props: messageProps,
+  emits: messageEmits,
+  setup(__props, { expose }) {
+    const props = __props;
+    const { Close } = TypeComponents;
+    const { ns, zIndex: zIndex2 } = useGlobalComponentSettings("message");
+    const { currentZIndex, nextZIndex } = zIndex2;
+    const messageRef = ref();
+    const visible = ref(false);
+    const height = ref(0);
+    let stopTimer = void 0;
+    const badgeType = computed(() => props.type ? props.type === "error" ? "danger" : props.type : "info");
+    const typeClass = computed(() => {
+      const type = props.type;
+      return { [ns.bm("icon", type)]: type && TypeComponentsMap[type] };
+    });
+    const iconComponent = computed(() => props.icon || TypeComponentsMap[props.type] || "");
+    const lastOffset = computed(() => getLastOffset(props.id));
+    const offset = computed(() => getOffsetOrSpace(props.id, props.offset) + lastOffset.value);
+    const bottom = computed(() => height.value + offset.value);
+    const customStyle = computed(() => ({
+      top: `${offset.value}px`,
+      zIndex: currentZIndex.value
+    }));
+    function startTimer() {
+      if (props.duration === 0)
+        return;
+      ({ stop: stopTimer } = useTimeoutFn(() => {
+        close();
+      }, props.duration));
+    }
+    function clearTimer() {
+      stopTimer == null ? void 0 : stopTimer();
+    }
+    function close() {
+      visible.value = false;
+    }
+    function keydown({ code }) {
+      if (code === EVENT_CODE.esc) {
+        close();
+      }
+    }
+    onMounted(() => {
+      startTimer();
+      nextZIndex();
+      visible.value = true;
+    });
+    watch(() => props.repeatNum, () => {
+      clearTimer();
+      startTimer();
+    });
+    useEventListener(document, "keydown", keydown);
+    useResizeObserver(messageRef, () => {
+      height.value = messageRef.value.getBoundingClientRect().height;
+    });
+    expose({
+      visible,
+      bottom,
+      close
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(Transition, {
+        name: unref(ns).b("fade"),
+        onBeforeLeave: _ctx.onClose,
+        onAfterLeave: ($event) => _ctx.$emit("destroy"),
+        persisted: ""
+      }, {
+        default: withCtx(() => [
+          withDirectives(createBaseVNode("div", {
+            id: _ctx.id,
+            ref_key: "messageRef",
+            ref: messageRef,
+            class: normalizeClass([
+              unref(ns).b(),
+              { [unref(ns).m(_ctx.type)]: _ctx.type },
+              unref(ns).is("center", _ctx.center),
+              unref(ns).is("closable", _ctx.showClose),
+              unref(ns).is("plain", _ctx.plain),
+              _ctx.customClass
+            ]),
+            style: normalizeStyle(unref(customStyle)),
+            role: "alert",
+            onMouseenter: clearTimer,
+            onMouseleave: startTimer
+          }, [
+            _ctx.repeatNum > 1 ? (openBlock(), createBlock(unref(ElBadge), {
+              key: 0,
+              value: _ctx.repeatNum,
+              type: unref(badgeType),
+              class: normalizeClass(unref(ns).e("badge"))
+            }, null, 8, ["value", "type", "class"])) : createCommentVNode("v-if", true),
+            unref(iconComponent) ? (openBlock(), createBlock(unref(ElIcon), {
+              key: 1,
+              class: normalizeClass([unref(ns).e("icon"), unref(typeClass)])
+            }, {
+              default: withCtx(() => [
+                (openBlock(), createBlock(resolveDynamicComponent(unref(iconComponent))))
+              ]),
+              _: 1
+            }, 8, ["class"])) : createCommentVNode("v-if", true),
+            renderSlot(_ctx.$slots, "default", {}, () => [
+              !_ctx.dangerouslyUseHTMLString ? (openBlock(), createElementBlock("p", {
+                key: 0,
+                class: normalizeClass(unref(ns).e("content"))
+              }, toDisplayString(_ctx.message), 3)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                createCommentVNode(" Caution here, message could've been compromised, never use user's input as message "),
+                createBaseVNode("p", {
+                  class: normalizeClass(unref(ns).e("content")),
+                  innerHTML: _ctx.message
+                }, null, 10, ["innerHTML"])
+              ], 2112))
+            ]),
+            _ctx.showClose ? (openBlock(), createBlock(unref(ElIcon), {
+              key: 2,
+              class: normalizeClass(unref(ns).e("closeBtn")),
+              onClick: withModifiers(close, ["stop"])
+            }, {
+              default: withCtx(() => [
+                createVNode(unref(Close))
+              ]),
+              _: 1
+            }, 8, ["class", "onClick"])) : createCommentVNode("v-if", true)
+          ], 46, ["id"]), [
+            [vShow, visible.value]
+          ])
+        ]),
+        _: 3
+      }, 8, ["name", "onBeforeLeave", "onAfterLeave"]);
+    };
+  }
+});
+var MessageConstructor = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__file", "message.vue"]]);
+let seed = 1;
+const normalizeOptions = (params) => {
+  const options = !params || isString$1(params) || isVNode(params) || isFunction$1(params) ? { message: params } : params;
+  const normalized = {
+    ...messageDefaults,
+    ...options
+  };
+  if (!normalized.appendTo) {
+    normalized.appendTo = document.body;
+  } else if (isString$1(normalized.appendTo)) {
+    let appendTo = document.querySelector(normalized.appendTo);
+    if (!isElement(appendTo)) {
+      appendTo = document.body;
+    }
+    normalized.appendTo = appendTo;
+  }
+  if (isBoolean(messageConfig.grouping) && !normalized.grouping) {
+    normalized.grouping = messageConfig.grouping;
+  }
+  if (isNumber(messageConfig.duration) && normalized.duration === 3e3) {
+    normalized.duration = messageConfig.duration;
+  }
+  if (isNumber(messageConfig.offset) && normalized.offset === 16) {
+    normalized.offset = messageConfig.offset;
+  }
+  if (isBoolean(messageConfig.showClose) && !normalized.showClose) {
+    normalized.showClose = messageConfig.showClose;
+  }
+  return normalized;
+};
+const closeMessage = (instance) => {
+  const idx = instances.indexOf(instance);
+  if (idx === -1)
+    return;
+  instances.splice(idx, 1);
+  const { handler } = instance;
+  handler.close();
+};
+const createMessage = ({ appendTo, ...options }, context) => {
+  const id = `message_${seed++}`;
+  const userOnClose = options.onClose;
+  const container = document.createElement("div");
+  const props = {
+    ...options,
+    id,
+    onClose: () => {
+      userOnClose == null ? void 0 : userOnClose();
+      closeMessage(instance);
+    },
+    onDestroy: () => {
+      render(null, container);
+    }
+  };
+  const vnode = createVNode(MessageConstructor, props, isFunction$1(props.message) || isVNode(props.message) ? {
+    default: isFunction$1(props.message) ? props.message : () => props.message
+  } : null);
+  vnode.appContext = context || message._context;
+  render(vnode, container);
+  appendTo.appendChild(container.firstElementChild);
+  const vm = vnode.component;
+  const handler = {
+    close: () => {
+      vm.exposed.visible.value = false;
+    }
+  };
+  const instance = {
+    id,
+    vnode,
+    vm,
+    handler,
+    props: vnode.component.props
+  };
+  return instance;
+};
+const message = (options = {}, context) => {
+  if (!isClient)
+    return { close: () => void 0 };
+  const normalized = normalizeOptions(options);
+  if (normalized.grouping && instances.length) {
+    const instance2 = instances.find(({ vnode: vm }) => {
+      var _a2;
+      return ((_a2 = vm.props) == null ? void 0 : _a2.message) === normalized.message;
+    });
+    if (instance2) {
+      instance2.props.repeatNum += 1;
+      instance2.props.type = normalized.type;
+      return instance2.handler;
+    }
+  }
+  if (isNumber(messageConfig.max) && instances.length >= messageConfig.max) {
+    return { close: () => void 0 };
+  }
+  const instance = createMessage(normalized, context);
+  instances.push(instance);
+  return instance.handler;
+};
+messageTypes.forEach((type) => {
+  message[type] = (options = {}, appContext) => {
+    const normalized = normalizeOptions(options);
+    return message({ ...normalized, type }, appContext);
+  };
+});
+function closeAll(type) {
+  for (const instance of instances) {
+    if (!type || type === instance.props.type) {
+      instance.handler.close();
+    }
+  }
+}
+message.closeAll = closeAll;
+message._context = null;
+const ElMessage = withInstallFunction(message, "$message");
 const FOCUSABLE_CHILDREN = "_trap-focus-children";
 const FOCUS_STACK = [];
 const FOCUS_HANDLER = (e) => {
@@ -12539,7 +13042,7 @@ MESSAGE_BOX_VARIANTS.forEach((boxType) => {
   MessageBox[boxType] = messageBoxFactory(boxType);
 });
 function messageBoxFactory(boxType) {
-  return (message, title, options, appContext) => {
+  return (message2, title, options, appContext) => {
     let titleOrOpts = "";
     if (isObject$1(title)) {
       options = title;
@@ -12551,7 +13054,7 @@ function messageBoxFactory(boxType) {
     }
     return MessageBox(Object.assign({
       title: titleOrOpts,
-      message,
+      message: message2,
       type: "",
       ...MESSAGE_BOX_DEFAULT_OPTS[boxType]
     }, options, {
@@ -12653,13 +13156,13 @@ const _sfc_main$4 = {
       }, 1500);
     },
     speechVoice() {
-      console.log("touchstart");
+      ElMessage("touchstart");
       recorder.start().then(() => this.isRecording = true);
     },
     stopVoice() {
-      console.log("touchend");
+      ElMessage("touchend");
       recorder.stop().then(({ blob, buffer }) => {
-        console.log("download", blob);
+        ElMessage("download", blob);
         let audio = new Blob([exportWAV16k(buffer[0])], "audio/wav");
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);

@@ -30,8 +30,9 @@
 import util from '../../utils/helper'
 import Recorder from 'recorder-js'
 import { WaveFileLoader, exportWAV16k } from '../../utils/WaveFileLoader'
-import { ElButton,ElMessageBox } from "element-plus"
+import { ElButton,ElMessage,ElMessageBox } from "element-plus"
 import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
 const audioContext =  new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
@@ -117,16 +118,16 @@ export default {
             }, 1500);
         },
         speechVoice(){
-          console.log('touchstart')
+          ElMessage('touchstart');
           recorder.start()
             .then(() => this.isRecording = true);
         },
         stopVoice(){
-          console.log('touchend');
+          ElMessage('touchend');
           // buffer is an AudioBuffer(Float32Array ArrayBuffer)
           recorder.stop()
             .then(({blob, buffer}) => {
-                console.log('download',blob);
+                ElMessage('download',blob);
                 let audio = new Blob([exportWAV16k(buffer[0])],'audio/wav');
                 const a = document.createElement('a');
                 a.href = window.URL.createObjectURL(audio);
