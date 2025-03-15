@@ -122,10 +122,11 @@ export default {
             .then(() => this.isRecording = true);
         },
         stopVoice(){
-          console.log('touchend',recorder);
+          console.log('touchend');
           // buffer is an AudioBuffer(Float32Array ArrayBuffer)
           recorder.stop()
             .then(({blob, buffer}) => {
+                console.log('download',blob);
                 let audio = new Blob([exportWAV16k(buffer[0])],'audio/wav');
                 const a = document.createElement('a');
                 a.href = window.URL.createObjectURL(audio);
