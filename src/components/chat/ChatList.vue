@@ -19,7 +19,7 @@
 
 
         <section class="foot">
-          <ElButton style="width: 100%;user-select:none;" type="primary" @touchstart.native="speechVoice" @touchend.native="stopVoice" @contextmenu.native="handlecontextmenu">按住说话({{sampleRate}}kHz)</ElButton>
+          <ElButton style="width: 100%;user-select:none;" type="primary" @touchstart.native="speechVoice" @touchend.native="stopVoice" @contextmenu.native="handlecontextmenu">按住说话({{parseInt(sampleRate/1000)}}kHz)</ElButton>
         </section>
 
 
@@ -36,7 +36,7 @@ import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
 const audioContext =  new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
-const sampleRate = ref(audioContext.sampleRate/1000);
+const sampleRate = ref(audioContext.sampleRate);
 const handler = {};
 const isRecording = ref(false);
 const chats = [
@@ -78,8 +78,9 @@ const speechVoice = ()=>{
             recorder.onstop = ()=> {
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(chunks[0]);
-                reader.onload = (e)=>{
-                    resolve(e.target.result);
+                reader.onload = async (e)=>{
+                    const ab = await audioContext.decodeAudioData(e.target.result);
+                    resolve(ab);
                 }
             }
         })
@@ -93,7 +94,7 @@ const stopVoice = ()=>{
     // buffer is an AudioBuffer(Float32Array ArrayBuffer)
     handler.stop()
     .then((buffer) => {
-        console.log(new WaveFileLoader(buffer));
+        console.log(buffer,new WaveFileLoader(buffer));
         ElMessage('download');
         let audio = new Blob([exportWAV16k(buffer)],{type:'audio/wav'});
         const a = document.createElement('a');

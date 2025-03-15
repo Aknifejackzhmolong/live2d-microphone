@@ -12656,7 +12656,7 @@ const _sfc_main$4 = {
   __name: "ChatList",
   setup(__props) {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16e3 });
-    const sampleRate = ref(audioContext.sampleRate / 1e3);
+    const sampleRate = ref(audioContext.sampleRate);
     const handler = {};
     const isRecording = ref(false);
     const chats = [
@@ -12698,8 +12698,9 @@ const _sfc_main$4 = {
           recorder.onstop = () => {
             const reader = new FileReader();
             reader.readAsArrayBuffer(chunks[0]);
-            reader.onload = (e) => {
-              resolve2(e.target.result);
+            reader.onload = async (e) => {
+              const ab = await audioContext.decodeAudioData(e.target.result);
+              resolve2(ab);
             };
           };
         });
@@ -12711,7 +12712,7 @@ const _sfc_main$4 = {
     const stopVoice = () => {
       ElMessage("touchend");
       handler.stop().then((buffer) => {
-        console.log(new WaveFileLoader(buffer));
+        console.log(buffer, new WaveFileLoader(buffer));
         ElMessage("download");
         let audio = new Blob([exportWAV16k(buffer)], { type: "audio/wav" });
         const a = document.createElement("a");
@@ -12804,7 +12805,7 @@ const _sfc_main$4 = {
             onContextmenu: handlecontextmenu
           }, {
             default: withCtx(() => [
-              createTextVNode("按住说话(" + toDisplayString(sampleRate.value) + "kHz)", 1)
+              createTextVNode("按住说话(" + toDisplayString(parseInt(sampleRate.value / 1e3)) + "kHz)", 1)
             ]),
             _: 1
           })
