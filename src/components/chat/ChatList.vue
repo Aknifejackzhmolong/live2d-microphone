@@ -35,7 +35,7 @@ import 'element-plus/es/components/button/style/css'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
-const audioContext =  new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
+const audioContext =  new (window.AudioContext || window.webkitAudioContext)(/*{sampleRate:16000}*/);
 const sampleRate = ref(audioContext.sampleRate);
 const handler = {};
 const isRecording = ref(false);

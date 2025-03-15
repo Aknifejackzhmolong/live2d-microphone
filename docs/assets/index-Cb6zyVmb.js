@@ -12655,7 +12655,9 @@ const _hoisted_6 = { class: "foot" };
 const _sfc_main$4 = {
   __name: "ChatList",
   setup(__props) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16e3 });
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)(
+      /*{sampleRate:16000}*/
+    );
     const sampleRate = ref(audioContext.sampleRate);
     const handler = {};
     const isRecording = ref(false);
