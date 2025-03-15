@@ -12649,7 +12649,7 @@ const _sfc_main$4 = {
       })().then((stream) => {
         const chunks = [];
         handler.recorder && handler.recorder.stop();
-        const recorder = handler.recorder || new MediaRecorder(stream, { type: "audio/wav" });
+        const recorder = handler.recorder || new MediaRecorder(stream, { mimeType: "audio/wav" });
         recorder.ondataavailable = (event) => {
           isRecording.value = true;
           chunks.push(event.data);
@@ -12674,7 +12674,7 @@ const _sfc_main$4 = {
       handler.stop().then((buffer) => {
         console.log(buffer, new WaveFileLoader(buffer));
         ElMessage("download");
-        let audio = new Blob([buffer], { type: "audio/wav" });
+        let audio = new Blob([buffer], { mimeType: "audio/wav" });
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);
         a.download = `record-${this.sampleRate}kHz.wav`;
