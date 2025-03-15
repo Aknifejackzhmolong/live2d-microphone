@@ -79,8 +79,8 @@ const speechVoice = ()=>{
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(chunks[0]);
                 reader.onload = async (e)=>{
-                    const ab = await audioContext.decodeAudioData(e.target.result);
-                    resolve(ab);
+                    // const ab = await audioContext.decodeAudioData(e.target.result);
+                    resolve(e.target.result);
                 }
             }
         })
@@ -96,7 +96,7 @@ const stopVoice = ()=>{
     .then((buffer) => {
         console.log(buffer,new WaveFileLoader(buffer));
         ElMessage('download');
-        let audio = new Blob([exportWAV16k(buffer)],{type:'audio/wav'});
+        let audio = new Blob([(buffer)],{type:'audio/wav'});
         const a = document.createElement('a');
         a.href = window.URL.createObjectURL(audio);
         a.download = `record-${this.sampleRate}kHz.wav`;
