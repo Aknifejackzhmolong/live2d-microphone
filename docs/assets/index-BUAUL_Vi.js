@@ -13163,13 +13163,13 @@ const _sfc_main$4 = {
       ElMessage("touchend");
       recorder.stop().then(({ blob, buffer }) => {
         ElMessage("download");
-        let audio = new Blob([exportWAV16k(buffer[0])], "audio/wav");
+        let audio = new Blob([exportWAV16k(buffer[0])], { type: "audio/wav" });
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);
         a.download = "record.wav";
-        document.appendChild(a);
+        document.body.appendChild(a);
         a.click();
-        document.removeChild(a);
+        document.body.removeChild(a);
         this.isRecording = false;
         return;
       }).then(({ data }) => {
