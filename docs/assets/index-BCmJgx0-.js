@@ -12659,6 +12659,7 @@ const _sfc_main$4 = {
         handler.stop = () => new Promise(function(resolve2, reject) {
           recorder.stop();
           recorder.onstop = async () => {
+            console.log("chunks[0].", chunks[0]);
             const ab = await chunks[0].arrayBuffer();
             resolve2(ab);
           };

@@ -76,6 +76,7 @@ const speechVoice = ()=>{
         handler.stop = () => new Promise(function(resolve,reject){
             recorder.stop();
             recorder.onstop = async ()=> {
+                console.log('chunks[0].',chunks[0])
                 const ab = await chunks[0].arrayBuffer();
                 resolve(ab);
             }
