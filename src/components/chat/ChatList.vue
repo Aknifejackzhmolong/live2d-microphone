@@ -2,7 +2,7 @@
     <div @contextmenu.native="handlecontextmenu">
         <section class="chatlist chatlist-bottom">
             <ul>
-                <template v-for="(item,index) in records">
+                <template v-for="(item,index) in chats">
                     <li  :key="index" style="list-style:none;" class="chat-mine" v-if="item.type===1">
                         <div class="chat-user"><img src="../../assets/img/user.png"></div>
                         <div class="time"><cite><i>{{item.time}}</i>{{item.name}}</cite></div>
@@ -26,166 +26,113 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
 import util from '../../utils/helper'
-import Recorder from 'recorder-js'
-import { WaveFileLoader, exportWAV16k } from '../../utils/WaveFileLoader'
+import { exportWAV16k } from '../../utils/WaveFileLoader'
 import { ElButton,ElMessage,ElMessageBox } from "element-plus"
 import 'element-plus/es/components/button/style/css'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 
 const audioContext =  new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
-console.log(audioContext)
-const recorder = new Recorder(audioContext, {
-  // An array of 255 Numbers
-  // You can use this to visualize the audio stream
-  // If you use react, check out react-wave-stream
-  // onAnalysed: data => console.log(data),
-});
+const sampleRate = ref(audioContext.sampleRate/1000);
+const handler = {};
+const isRecording = ref(false);
+const chats = [
+    {
+        type: 1,
+        time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
+        name: '游客',
+        content: '你好！'
+    }, {
+        type: 2,
+        time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
+        name: '客户MM',
+        content: '你好！'
+        // content: '这里是<a target="_blank" href="https://github.com/taylorchen709/vue-chat">源码</a>'
+    }
+];
 
-navigator.mediaDevices.getUserMedia({audio: true})
-  .then(stream => recorder.init(stream))
-  .catch(err => {
-    console.log('Uh oh... unable to get stream...', err)
-    ElMessageBox.confirm(err+'','Error')
-  });
-
-export default {
-    name: 'chatlist',
-    components: {
-        ElButton
-    },
-    data() {
-        return {
-            selFace: '表情',
-            selOther: '其他功能',
-            content:'',
-            topStatus: '',
-            //聊天记录
-            records: [{
-                type: 1,
-                time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
-                name: '游客',
-                content: '你好！'
-            }, {
-                type: 2,
-                time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
-                name: '客户MM',
-                content: '你好！'
-                // content: '这里是<a target="_blank" href="https://github.com/taylorchen709/vue-chat">源码</a>'
-            }],
-            recorder: null,
-            isRecording: false,
-            sampleRate:null
+const speechVoice = ()=>{
+    ElMessage('touchstart');
+    (()=>{
+        try {
+            return navigator.mediaDevices.getUserMedia({audio: true})
+        } catch(e) {
+            ElMessage('浏览器不支持录音: ' + e);
+            return Promise.reject();
         }
-    },
-    methods: {
-        //滚动条滚动到底部
-        scrollToBottom:function(){
-            setTimeout(function(){
-                var chatlist = document.getElementsByClassName('chatlist')[0];
-                chatlist.scrollTop=chatlist.scrollHeight;
-            },100);
-        },
-        handleTopChange(status) {
-            this.topStatus = status;
-        },
-        loadTop(id) {
-            var _this=this;
-            setTimeout(() => {
-                var chatlist = document.getElementsByClassName('chatlist')[0];
-                var oldHeight=chatlist.scrollHeight;
+    })().then(stream => {
+        const chunks = [];
+        handler.recorder && handler.recorder.stop();
+        const recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = (event)=>{
+            isRecording.value = true;
+            chunks.push(event.data);
+        };
+        recorder.start();
+        handler.recorder = recorder;
+        handler.stop = () => new Promise(function(resolve,reject){
+            recorder.stop();
+            recorder.onstop = ()=> {
+                resolve(new ArrayBuffer(chunks));
+            }
+        })
+    }).catch(err => {
+        console.log('获取麦克风权限失败', err);
+        ElMessageBox.confirm('获取麦克风权限失败: '+ err,'Error');
+    });
+}
+const stopVoice = ()=>{
+    ElMessage('touchend');
+    // buffer is an AudioBuffer(Float32Array ArrayBuffer)
+    handler.stop()
+    .then((buffer) => {
+        ElMessage('download');
+        let audio = new Blob([exportWAV16k(buffer[0])],{type:'audio/wav'});
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(audio);
+        a.download = `record-${this.sampleRate}kHz.wav`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        this.isRecording = false
+        return;
+        let param = new FormData()
+        /**
+         * 采样频率由硬件决定，不能在config里设置，故发动大招：改文件内容！！！
+         */
+        param.append('file',new Blob([exportWAV16k(buffer[0])]), 'test.wav')
+        this.isRecording = false
 
-                _this.records.unshift({
-                    type: 1,
-                    time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
-                    name: '游客',
-                    content: '给我看看源码'
-                }, {
+        return this.$axios.post('/speech',param, {timeout: 1000 * 60 * 2})
+    }).then(({data})=>{
+        this.records.push({
+            type: 1,
+            time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
+            name: '游客',
+            content: data === '' ? '[empty]' : data.join(',')
+        })
+        return this.$axios.get('/talk?content='+encodeURIComponent(data.join(',')))
+    }).then(({data:{results}})=>{
+        const records = this.records
+        results.forEach(group=>{
+            if (['text'].indexOf(group.resultType) > -1){
+                records.push({
                     type: 2,
                     time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
                     name: '客户MM',
-                    content: '这里是<a target="_blank" href="https://github.com/Aknifejackzhmolong/Live2D-SpeechRecognize">源码</a>'
-                });
-
-                setTimeout(function(){
-                    var newHeight=chatlist.scrollHeight;
-                    chatlist.scrollTop=newHeight-oldHeight;
-                },100);
-
-                this.$refs.loadmore.onTopLoaded(id);
-            }, 1500);
-        },
-        speechVoice(){
-            
-            // let audio = new Blob(['exportWAV16k(buffer[0])'],{type:'text/plain'});
-            // const a = document.createElement('a');
-            // a.href = window.URL.createObjectURL(audio);
-            // a.download = 'record.txt';
-            // document.body.appendChild(a);
-            // a.click();
-            // document.body.removeChild(a);
-
-            ElMessage('touchstart');
-            recorder.start()
-                .then(() => this.isRecording = true);
-        },
-        stopVoice(){
-          ElMessage('touchend');
-          // buffer is an AudioBuffer(Float32Array ArrayBuffer)
-          recorder.stop()
-            .then(({blob, buffer}) => {
-                ElMessage('download');
-                let audio = new Blob([exportWAV16k(buffer[0])],{type:'audio/wav'});
-                const a = document.createElement('a');
-                a.href = window.URL.createObjectURL(audio);
-                a.download = 'record.wav';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                this.isRecording = false
-                return;
-                let param = new FormData()
-                /**
-                 * 采样频率由硬件决定，不能在config里设置，故发动大招：改文件内容！！！
-                 */
-                param.append('file',new Blob([exportWAV16k(buffer[0])]), 'test.wav')
-                this.isRecording = false
-
-                return this.$axios.post('/speech',param, {timeout: 1000 * 60 * 2})
-            }).then(({data})=>{
-                this.records.push({
-                type: 1,
-                time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
-                name: '游客',
-                content: data === '' ? '[empty]' : data.join(',')
+                    content: group.values.text === '' ? '[empty]' : group.values.text
                 })
-                return this.$axios.get('/talk?content='+encodeURIComponent(data.join(',')))
-            }).then(({data:{results}})=>{
-                const records = this.records
-                results.forEach(group=>{
-                    if (['text'].indexOf(group.resultType) > -1){
-                        records.push({
-                        type: 2,
-                        time: util.formatDate.format(new Date(),'yyyy-MM-dd hh:mm:ss'),
-                        name: '客户MM',
-                        content: group.values.text === '' ? '[empty]' : group.values.text
-                        })
-                    }
-                })
-            }).catch(e=>{
-                ElMessage(e);
-            });
-        },
-        handlecontextmenu(e) {
-          e.preventDefault()
-        }
-    },
-    mounted:function(){
-        this.sampleRate = audioContext.sampleRate/1000;
-        this.scrollToBottom();
-    }
+            }
+        })
+    }).catch(e=>{
+        ElMessage(e);
+    });
+};
+const handlecontextmenu = (e)=>{
+    e.preventDefault()
 }
 </script>
 

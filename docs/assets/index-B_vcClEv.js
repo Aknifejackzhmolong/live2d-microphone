@@ -7026,6 +7026,7 @@ const _sfc_main$d = {
   }
 };
 const Heads = /* @__PURE__ */ _export_sfc$1(_sfc_main$d, [["__scopeId", "data-v-bf23be05"]]);
+const _imports_0 = "/live2d-microphone/assets/user-BLT-PN9G.png";
 let SIGN_REGEXP = /([yMdhsm])(\1*)/g;
 let DEFAULT_PATTERN = "yyyy-MM-dd";
 function padding(s, len) {
@@ -7093,440 +7094,6 @@ const util = {
     }
   }
 };
-function getDefaultExportFromCjs(x) {
-  return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
-}
-var lib = {};
-var microphone = {};
-var inlineWorker;
-var hasRequiredInlineWorker;
-function requireInlineWorker() {
-  if (hasRequiredInlineWorker) return inlineWorker;
-  hasRequiredInlineWorker = 1;
-  var define_global_default2 = {};
-  var WORKER_ENABLED = !!(define_global_default2 === define_global_default2.window && define_global_default2.URL && define_global_default2.Blob && define_global_default2.Worker);
-  function InlineWorker(func, self2) {
-    var _this = this;
-    var functionBody;
-    self2 = self2 || {};
-    if (WORKER_ENABLED) {
-      functionBody = func.toString().trim().match(
-        /^function\s*\w*\s*\([\w\s,]*\)\s*{([\w\W]*?)}$/
-      )[1];
-      return new define_global_default2.Worker(define_global_default2.URL.createObjectURL(
-        new define_global_default2.Blob([functionBody], { type: "text/javascript" })
-      ));
-    }
-    function postMessage2(data) {
-      setTimeout(function() {
-        _this.onmessage({ data });
-      }, 0);
-    }
-    this.self = self2;
-    this.self.postMessage = postMessage2;
-    setTimeout(func.bind(self2, self2), 0);
-  }
-  InlineWorker.prototype.postMessage = function postMessage(data) {
-    var _this = this;
-    setTimeout(function() {
-      _this.self.onmessage({ data });
-    }, 0);
-  };
-  inlineWorker = InlineWorker;
-  return inlineWorker;
-}
-var hasRequiredMicrophone;
-function requireMicrophone() {
-  if (hasRequiredMicrophone) return microphone;
-  hasRequiredMicrophone = 1;
-  Object.defineProperty(microphone, "__esModule", {
-    value: true
-  });
-  var _createClass = /* @__PURE__ */ function() {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
-    return function(Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-  var _inlineWorker = requireInlineWorker();
-  var _inlineWorker2 = _interopRequireDefault(_inlineWorker);
-  function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { default: obj };
-  }
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-  var defaultConfig = {
-    bufferLen: 4096,
-    numChannels: 2,
-    mimeType: "audio/wav"
-  };
-  var Microphone = function() {
-    function Microphone2(source, config) {
-      var _this = this;
-      _classCallCheck(this, Microphone2);
-      this.config = Object.assign({}, defaultConfig, config);
-      this.recording = false;
-      this.callbacks = {
-        getBuffer: [],
-        exportWAV: []
-      };
-      this.context = source.context;
-      this.node = (this.context.createScriptProcessor || this.context.createJavaScriptNode).call(this.context, this.config.bufferLen, this.config.numChannels, this.config.numChannels);
-      this.node.onaudioprocess = function(e) {
-        if (!_this.recording) return;
-        var buffer = [];
-        for (var channel = 0; channel < _this.config.numChannels; channel++) {
-          buffer.push(e.inputBuffer.getChannelData(channel));
-        }
-        _this.worker.postMessage({
-          command: "record",
-          buffer
-        });
-      };
-      source.connect(this.node);
-      this.node.connect(this.context.destination);
-      var self2 = {};
-      this.worker = new _inlineWorker2.default(function() {
-        var recLength = 0, recBuffers = [], sampleRate = void 0, numChannels = void 0;
-        this.onmessage = function(e) {
-          switch (e.data.command) {
-            case "init":
-              init(e.data.config);
-              break;
-            case "record":
-              record(e.data.buffer);
-              break;
-            case "exportWAV":
-              exportWAV(e.data.type);
-              break;
-            case "getBuffer":
-              getBuffer();
-              break;
-            case "clear":
-              clear();
-              break;
-          }
-        };
-        function init(config2) {
-          sampleRate = config2.sampleRate;
-          numChannels = config2.numChannels;
-          initBuffers();
-        }
-        function record(inputBuffer) {
-          for (var channel = 0; channel < numChannels; channel++) {
-            recBuffers[channel].push(inputBuffer[channel]);
-          }
-          recLength += inputBuffer[0].length;
-        }
-        function exportWAV(type) {
-          var buffers = [];
-          for (var channel = 0; channel < numChannels; channel++) {
-            buffers.push(mergeBuffers(recBuffers[channel], recLength));
-          }
-          var interleaved = void 0;
-          if (numChannels === 2) {
-            interleaved = interleave(buffers[0], buffers[1]);
-          } else {
-            interleaved = buffers[0];
-          }
-          var dataview = encodeWAV(interleaved);
-          var audioBlob = new Blob([dataview], { type });
-          this.postMessage({ command: "exportWAV", data: audioBlob });
-        }
-        function getBuffer() {
-          var buffers = [];
-          for (var channel = 0; channel < numChannels; channel++) {
-            buffers.push(mergeBuffers(recBuffers[channel], recLength));
-          }
-          this.postMessage({ command: "getBuffer", data: buffers });
-        }
-        function clear() {
-          recLength = 0;
-          recBuffers = [];
-          initBuffers();
-        }
-        function initBuffers() {
-          for (var channel = 0; channel < numChannels; channel++) {
-            recBuffers[channel] = [];
-          }
-        }
-        function mergeBuffers(recBuffers2, recLength2) {
-          var result = new Float32Array(recLength2);
-          var offset = 0;
-          for (var i = 0; i < recBuffers2.length; i++) {
-            result.set(recBuffers2[i], offset);
-            offset += recBuffers2[i].length;
-          }
-          return result;
-        }
-        function interleave(inputL, inputR) {
-          var length = inputL.length + inputR.length;
-          var result = new Float32Array(length);
-          var index = 0, inputIndex = 0;
-          while (index < length) {
-            result[index++] = inputL[inputIndex];
-            result[index++] = inputR[inputIndex];
-            inputIndex++;
-          }
-          return result;
-        }
-        function floatTo16BitPCM(output, offset, input) {
-          for (var i = 0; i < input.length; i++, offset += 2) {
-            var s = Math.max(-1, Math.min(1, input[i]));
-            output.setInt16(offset, s < 0 ? s * 32768 : s * 32767, true);
-          }
-        }
-        function writeString(view, offset, string) {
-          for (var i = 0; i < string.length; i += 1) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-          }
-        }
-        function encodeWAV(samples) {
-          var buffer = new ArrayBuffer(44 + samples.length * 2);
-          var view = new DataView(buffer);
-          writeString(view, 0, "RIFF");
-          view.setUint32(4, 36 + samples.length * 2, true);
-          writeString(view, 8, "WAVE");
-          writeString(view, 12, "fmt ");
-          view.setUint32(16, 16, true);
-          view.setUint16(20, 1, true);
-          view.setUint16(22, numChannels, true);
-          view.setUint32(24, sampleRate, true);
-          view.setUint32(28, sampleRate * 4, true);
-          view.setUint16(32, numChannels * 2, true);
-          view.setUint16(34, 16, true);
-          writeString(view, 36, "data");
-          view.setUint32(40, samples.length * 2, true);
-          floatTo16BitPCM(view, 44, samples);
-          return view;
-        }
-      }, self2);
-      this.worker.postMessage({
-        command: "init",
-        config: {
-          sampleRate: this.context.sampleRate,
-          numChannels: this.config.numChannels
-        }
-      });
-      this.worker.onmessage = function(e) {
-        var cb = _this.callbacks[e.data.command].pop();
-        if (typeof cb === "function") {
-          cb(e.data.data);
-        }
-      };
-    }
-    _createClass(Microphone2, [{
-      key: "record",
-      value: function record() {
-        this.recording = true;
-      }
-    }, {
-      key: "stop",
-      value: function stop() {
-        this.recording = false;
-      }
-    }, {
-      key: "clear",
-      value: function clear() {
-        this.worker.postMessage({ command: "clear" });
-      }
-    }, {
-      key: "getBuffer",
-      value: function getBuffer(cb) {
-        cb = cb || this.config.callback;
-        if (!cb) throw new Error("Callback not set");
-        this.callbacks.getBuffer.push(cb);
-        this.worker.postMessage({ command: "getBuffer" });
-      }
-    }, {
-      key: "exportWAV",
-      value: function exportWAV(cb, mimeType) {
-        mimeType = mimeType || this.config.mimeType;
-        cb = cb || this.config.callback;
-        if (!cb) throw new Error("Callback not set");
-        this.callbacks.exportWAV.push(cb);
-        this.worker.postMessage({
-          command: "exportWAV",
-          type: mimeType
-        });
-      }
-    }]);
-    return Microphone2;
-  }();
-  Microphone.forceDownload = function forceDownload(blob, filename) {
-    var a = document.createElement("a");
-    a.style = "display: none";
-    document.body.appendChild(a);
-    var url = window.URL.createObjectURL(blob);
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  };
-  microphone.default = Microphone;
-  return microphone;
-}
-var hasRequiredLib;
-function requireLib() {
-  if (hasRequiredLib) return lib;
-  hasRequiredLib = 1;
-  Object.defineProperty(lib, "__esModule", {
-    value: true
-  });
-  var _createClass = /* @__PURE__ */ function() {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
-    return function(Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-  var _microphone = requireMicrophone();
-  var _microphone2 = _interopRequireDefault(_microphone);
-  function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { default: obj };
-  }
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-  var defaultConfig = {
-    nFrequencyBars: 255,
-    onAnalysed: null
-  };
-  var Recorder2 = function() {
-    function Recorder3(audioContext2) {
-      var config = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-      _classCallCheck(this, Recorder3);
-      this.config = Object.assign({}, defaultConfig, config);
-      this.audioContext = audioContext2;
-      this.audioInput = null;
-      this.realAudioInput = null;
-      this.inputPoint = null;
-      this.audioRecorder = null;
-      this.rafID = null;
-      this.analyserContext = null;
-      this.recIndex = 0;
-      this.stream = null;
-      this.updateAnalysers = this.updateAnalysers.bind(this);
-    }
-    _createClass(Recorder3, [{
-      key: "init",
-      value: function init(stream) {
-        var _this = this;
-        return new Promise(function(resolve2) {
-          _this.inputPoint = _this.audioContext.createGain();
-          _this.stream = stream;
-          _this.realAudioInput = _this.audioContext.createMediaStreamSource(stream);
-          _this.audioInput = _this.realAudioInput;
-          _this.audioInput.connect(_this.inputPoint);
-          _this.analyserNode = _this.audioContext.createAnalyser();
-          _this.analyserNode.fftSize = 2048;
-          _this.inputPoint.connect(_this.analyserNode);
-          _this.audioRecorder = new _microphone2.default(_this.inputPoint);
-          var zeroGain = _this.audioContext.createGain();
-          zeroGain.gain.value = 0;
-          _this.inputPoint.connect(zeroGain);
-          zeroGain.connect(_this.audioContext.destination);
-          _this.updateAnalysers();
-          resolve2();
-        });
-      }
-    }, {
-      key: "start",
-      value: function start() {
-        var _this2 = this;
-        return new Promise(function(resolve2, reject) {
-          if (!_this2.audioRecorder) {
-            reject("Not currently recording");
-            return;
-          }
-          _this2.audioRecorder.clear();
-          _this2.audioRecorder.record();
-          resolve2(_this2.stream);
-        });
-      }
-    }, {
-      key: "stop",
-      value: function stop() {
-        var _this3 = this;
-        return new Promise(function(resolve2) {
-          _this3.audioRecorder.stop();
-          _this3.audioRecorder.getBuffer(function(buffer) {
-            _this3.audioRecorder.exportWAV(function(blob) {
-              return resolve2({ buffer, blob });
-            });
-          });
-        });
-      }
-    }, {
-      key: "updateAnalysers",
-      value: function updateAnalysers() {
-        if (this.config.onAnalysed) {
-          requestAnimationFrame(this.updateAnalysers);
-          var freqByteData = new Uint8Array(this.analyserNode.frequencyBinCount);
-          this.analyserNode.getByteFrequencyData(freqByteData);
-          var data = new Array(255);
-          var lastNonZero = 0;
-          var datum = void 0;
-          for (var idx = 0; idx < 255; idx += 1) {
-            datum = Math.floor(freqByteData[idx]) - Math.floor(freqByteData[idx]) % 5;
-            if (datum !== 0) {
-              lastNonZero = idx;
-            }
-            data[idx] = datum;
-          }
-          this.config.onAnalysed({ data, lineTo: lastNonZero });
-        }
-      }
-    }, {
-      key: "setOnAnalysed",
-      value: function setOnAnalysed(handler) {
-        this.config.onAnalysed = handler;
-      }
-    }]);
-    return Recorder3;
-  }();
-  Recorder2.download = function download(blob) {
-    var filename = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : "audio";
-    _microphone2.default.forceDownload(blob, filename + ".wav");
-  };
-  lib.default = Recorder2;
-  return lib;
-}
-var recorderJs;
-var hasRequiredRecorderJs;
-function requireRecorderJs() {
-  if (hasRequiredRecorderJs) return recorderJs;
-  hasRequiredRecorderJs = 1;
-  recorderJs = requireLib();
-  return recorderJs;
-}
-var recorderJsExports = requireRecorderJs();
-const Recorder = /* @__PURE__ */ getDefaultExportFromCjs(recorderJsExports);
 function WaveFileLoader(buffer) {
   this.header = null;
   this.data = null;
@@ -10579,10 +10146,10 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
+function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
   return renderSlot(_ctx.$slots, "default", { handleKeydown: _ctx.onKeydown });
 }
-var ElFocusTrap = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$3], ["__file", "focus-trap.vue"]]);
+var ElFocusTrap = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$2], ["__file", "focus-trap.vue"]]);
 const badgeProps = buildProps({
   value: {
     type: [String, Number],
@@ -12741,7 +12308,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
   const _component_el_icon = resolveComponent("el-icon");
   const _component_el_input = resolveComponent("el-input");
   const _component_el_button = resolveComponent("el-button");
@@ -12940,7 +12507,7 @@ function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     _: 3
   }, 8, ["onAfterLeave"]);
 }
-var MessageBoxConstructor = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$2], ["__file", "index.vue"]]);
+var MessageBoxConstructor = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$1], ["__file", "index.vue"]]);
 const messageInstance = /* @__PURE__ */ new Map();
 const getAppendToElement = (props) => {
   let appendTo = document.body;
@@ -13079,94 +12646,72 @@ _MessageBox.install = (app) => {
   app.config.globalProperties.$prompt = _MessageBox.prompt;
 };
 const ElMessageBox = _MessageBox;
-const _imports_0 = "/live2d-microphone/assets/user-BLT-PN9G.png";
-const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16e3 });
-console.log(audioContext);
-const recorder = new Recorder(audioContext, {
-  // An array of 255 Numbers
-  // You can use this to visualize the audio stream
-  // If you use react, check out react-wave-stream
-  // onAnalysed: data => console.log(data),
-});
-navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => recorder.init(stream)).catch((err) => {
-  console.log("Uh oh... unable to get stream...", err);
-  ElMessageBox.confirm(err + "", "Error");
-});
+const _hoisted_1$1 = { class: "chatlist chatlist-bottom" };
+const _hoisted_2 = { class: "time" };
+const _hoisted_3 = ["innerHTML"];
+const _hoisted_4 = { class: "time" };
+const _hoisted_5 = ["innerHTML"];
+const _hoisted_6 = { class: "foot" };
 const _sfc_main$4 = {
-  name: "chatlist",
-  components: {
-    ElButton
-  },
-  data() {
-    return {
-      selFace: "表情",
-      selOther: "其他功能",
-      content: "",
-      topStatus: "",
-      //聊天记录
-      records: [{
+  __name: "ChatList",
+  setup(__props) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16e3 });
+    const sampleRate = ref(audioContext.sampleRate / 1e3);
+    const handler = {};
+    const isRecording = ref(false);
+    const chats = [
+      {
         type: 1,
         time: util.formatDate.format(/* @__PURE__ */ new Date(), "yyyy-MM-dd hh:mm:ss"),
         name: "游客",
         content: "你好！"
-      }, {
+      },
+      {
         type: 2,
         time: util.formatDate.format(/* @__PURE__ */ new Date(), "yyyy-MM-dd hh:mm:ss"),
         name: "客户MM",
         content: "你好！"
         // content: '这里是<a target="_blank" href="https://github.com/taylorchen709/vue-chat">源码</a>'
-      }],
-      recorder: null,
-      isRecording: false,
-      sampleRate: null
-    };
-  },
-  methods: {
-    //滚动条滚动到底部
-    scrollToBottom: function() {
-      setTimeout(function() {
-        var chatlist = document.getElementsByClassName("chatlist")[0];
-        chatlist.scrollTop = chatlist.scrollHeight;
-      }, 100);
-    },
-    handleTopChange(status) {
-      this.topStatus = status;
-    },
-    loadTop(id) {
-      var _this = this;
-      setTimeout(() => {
-        var chatlist = document.getElementsByClassName("chatlist")[0];
-        var oldHeight = chatlist.scrollHeight;
-        _this.records.unshift({
-          type: 1,
-          time: util.formatDate.format(/* @__PURE__ */ new Date(), "yyyy-MM-dd hh:mm:ss"),
-          name: "游客",
-          content: "给我看看源码"
-        }, {
-          type: 2,
-          time: util.formatDate.format(/* @__PURE__ */ new Date(), "yyyy-MM-dd hh:mm:ss"),
-          name: "客户MM",
-          content: '这里是<a target="_blank" href="https://github.com/Aknifejackzhmolong/Live2D-SpeechRecognize">源码</a>'
-        });
-        setTimeout(function() {
-          var newHeight = chatlist.scrollHeight;
-          chatlist.scrollTop = newHeight - oldHeight;
-        }, 100);
-        this.$refs.loadmore.onTopLoaded(id);
-      }, 1500);
-    },
-    speechVoice() {
+      }
+    ];
+    const speechVoice = () => {
       ElMessage("touchstart");
-      recorder.start().then(() => this.isRecording = true);
-    },
-    stopVoice() {
+      (() => {
+        try {
+          return navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          ElMessage("浏览器不支持录音: " + e);
+          return Promise.reject();
+        }
+      })().then((stream) => {
+        const chunks = [];
+        handler.recorder && handler.recorder.stop();
+        const recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = (event) => {
+          isRecording.value = true;
+          chunks.push(event.data);
+        };
+        recorder.start();
+        handler.recorder = recorder;
+        handler.stop = () => new Promise(function(resolve2, reject) {
+          recorder.stop();
+          recorder.onstop = () => {
+            resolve2(new ArrayBuffer(chunks));
+          };
+        });
+      }).catch((err) => {
+        console.log("获取麦克风权限失败", err);
+        ElMessageBox.confirm("获取麦克风权限失败: " + err, "Error");
+      });
+    };
+    const stopVoice = () => {
       ElMessage("touchend");
-      recorder.stop().then(({ blob, buffer }) => {
+      handler.stop().then((buffer) => {
         ElMessage("download");
         let audio = new Blob([exportWAV16k(buffer[0])], { type: "audio/wav" });
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);
-        a.download = "record.wav";
+        a.download = `record-${this.sampleRate}kHz.wav`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -13195,89 +12740,75 @@ const _sfc_main$4 = {
       }).catch((e) => {
         ElMessage(e);
       });
-    },
-    handlecontextmenu(e) {
+    };
+    const handlecontextmenu = (e) => {
       e.preventDefault();
-    }
-  },
-  mounted: function() {
-    this.sampleRate = audioContext.sampleRate / 1e3;
-    this.scrollToBottom();
+    };
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", { onContextmenu: handlecontextmenu }, [
+        createBaseVNode("section", _hoisted_1$1, [
+          createBaseVNode("ul", null, [
+            (openBlock(), createElementBlock(Fragment, null, renderList(chats, (item, index) => {
+              return openBlock(), createElementBlock(Fragment, null, [
+                item.type === 1 ? (openBlock(), createElementBlock("li", {
+                  key: index,
+                  style: { "list-style": "none" },
+                  class: "chat-mine"
+                }, [
+                  _cache[0] || (_cache[0] = createBaseVNode("div", { class: "chat-user" }, [
+                    createBaseVNode("img", { src: _imports_0 })
+                  ], -1)),
+                  createBaseVNode("div", _hoisted_2, [
+                    createBaseVNode("cite", null, [
+                      createBaseVNode("i", null, toDisplayString(item.time), 1),
+                      createTextVNode(toDisplayString(item.name), 1)
+                    ])
+                  ]),
+                  createBaseVNode("div", {
+                    class: "chat-text",
+                    innerHTML: item.content
+                  }, null, 8, _hoisted_3)
+                ])) : createCommentVNode("", true),
+                item.type === 2 ? (openBlock(), createElementBlock("li", {
+                  key: index,
+                  style: { "list-style": "none" }
+                }, [
+                  _cache[1] || (_cache[1] = createBaseVNode("div", { class: "chat-user" }, [
+                    createBaseVNode("img", { src: _imports_1 })
+                  ], -1)),
+                  createBaseVNode("div", _hoisted_4, [
+                    createBaseVNode("cite", null, [
+                      createTextVNode(toDisplayString(item.name), 1),
+                      createBaseVNode("i", null, toDisplayString(item.time), 1)
+                    ])
+                  ]),
+                  createBaseVNode("div", {
+                    class: "chat-text",
+                    innerHTML: item.content
+                  }, null, 8, _hoisted_5)
+                ])) : createCommentVNode("", true)
+              ], 64);
+            }), 64))
+          ])
+        ]),
+        createBaseVNode("section", _hoisted_6, [
+          createVNode(unref(ElButton), {
+            style: { "width": "100%", "user-select": "none" },
+            type: "primary",
+            onTouchstart: speechVoice,
+            onTouchend: stopVoice,
+            onContextmenu: handlecontextmenu
+          }, {
+            default: withCtx(() => [
+              createTextVNode("按住说话(" + toDisplayString(sampleRate.value) + "kHz)", 1)
+            ]),
+            _: 1
+          })
+        ])
+      ], 32);
+    };
   }
 };
-const _hoisted_1$1 = { class: "chatlist chatlist-bottom" };
-const _hoisted_2 = { class: "time" };
-const _hoisted_3 = ["innerHTML"];
-const _hoisted_4 = { class: "time" };
-const _hoisted_5 = ["innerHTML"];
-const _hoisted_6 = { class: "foot" };
-function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
-  const _component_ElButton = resolveComponent("ElButton");
-  return openBlock(), createElementBlock("div", {
-    onContextmenu: _cache[0] || (_cache[0] = (...args) => $options.handlecontextmenu && $options.handlecontextmenu(...args))
-  }, [
-    createBaseVNode("section", _hoisted_1$1, [
-      createBaseVNode("ul", null, [
-        (openBlock(true), createElementBlock(Fragment, null, renderList($data.records, (item, index) => {
-          return openBlock(), createElementBlock(Fragment, null, [
-            item.type === 1 ? (openBlock(), createElementBlock("li", {
-              key: index,
-              style: { "list-style": "none" },
-              class: "chat-mine"
-            }, [
-              _cache[1] || (_cache[1] = createBaseVNode("div", { class: "chat-user" }, [
-                createBaseVNode("img", { src: _imports_0 })
-              ], -1)),
-              createBaseVNode("div", _hoisted_2, [
-                createBaseVNode("cite", null, [
-                  createBaseVNode("i", null, toDisplayString(item.time), 1),
-                  createTextVNode(toDisplayString(item.name), 1)
-                ])
-              ]),
-              createBaseVNode("div", {
-                class: "chat-text",
-                innerHTML: item.content
-              }, null, 8, _hoisted_3)
-            ])) : createCommentVNode("", true),
-            item.type === 2 ? (openBlock(), createElementBlock("li", {
-              key: index,
-              style: { "list-style": "none" }
-            }, [
-              _cache[2] || (_cache[2] = createBaseVNode("div", { class: "chat-user" }, [
-                createBaseVNode("img", { src: _imports_1 })
-              ], -1)),
-              createBaseVNode("div", _hoisted_4, [
-                createBaseVNode("cite", null, [
-                  createTextVNode(toDisplayString(item.name), 1),
-                  createBaseVNode("i", null, toDisplayString(item.time), 1)
-                ])
-              ]),
-              createBaseVNode("div", {
-                class: "chat-text",
-                innerHTML: item.content
-              }, null, 8, _hoisted_5)
-            ])) : createCommentVNode("", true)
-          ], 64);
-        }), 256))
-      ])
-    ]),
-    createBaseVNode("section", _hoisted_6, [
-      createVNode(_component_ElButton, {
-        style: { "width": "100%", "user-select": "none" },
-        type: "primary",
-        onTouchstart: $options.speechVoice,
-        onTouchend: $options.stopVoice,
-        onContextmenu: $options.handlecontextmenu
-      }, {
-        default: withCtx(() => [
-          createTextVNode("按住说话(" + toDisplayString($data.sampleRate) + "kHz)", 1)
-        ]),
-        _: 1
-      }, 8, ["onTouchstart", "onTouchend", "onContextmenu"])
-    ])
-  ], 32);
-}
-const ChatList = /* @__PURE__ */ _export_sfc$1(_sfc_main$4, [["render", _sfc_render$1]]);
 const DEFINES$1 = {
   "ASUNA_SUIT_SCALE": 1.7,
   "ASUNA_SUIT_POSX": 0,
@@ -13390,7 +12921,7 @@ const _sfc_main$1 = {
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", null, [
         createVNode(Heads),
-        createVNode(ChatList, {
+        createVNode(_sfc_main$4, {
           ref_key: "containerRef",
           ref: containerRef
         }, null, 512),
