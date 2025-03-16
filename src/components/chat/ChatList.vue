@@ -78,6 +78,7 @@ const speechVoice = ()=>{
                 reader.readAsArrayBuffer(chunks[0]);
                 reader.onload = (e)=>{
                     const ab = audioContext.decodeAudioData(e.target.result);
+                    console.log('ab',ab);
                     resolve(ab);
                 }
             }

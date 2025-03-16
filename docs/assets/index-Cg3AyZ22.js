@@ -12662,6 +12662,7 @@ const _sfc_main$4 = {
             reader.readAsArrayBuffer(chunks[0]);
             reader.onload = (e) => {
               const ab = audioContext.decodeAudioData(e.target.result);
+              console.log("ab", ab);
               resolve2(ab);
             };
           };
