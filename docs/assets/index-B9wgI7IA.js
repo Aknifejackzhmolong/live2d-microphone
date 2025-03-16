@@ -12658,9 +12658,12 @@ const _sfc_main$4 = {
           recorder.stop();
           recorder.onstop = async () => {
             console.log("chunks[0].", chunks[0]);
-            let ab = await chunks[0].arrayBuffer();
-            ab = audioContext.decodeAudioData(ab);
-            resolve2(ab);
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(chunks[0]);
+            reader.onload = (e) => {
+              const ab = audioContext.decodeAudioData(e.target.result);
+              resolve2(ab);
+            };
           };
         });
         recorder.start();
