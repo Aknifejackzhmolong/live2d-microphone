@@ -58,7 +58,7 @@ const speechVoice = ()=>{
     ElMessage('touchstart');
     (()=>{
         try {
-            return navigator.mediaDevices.getUserMedia({audio: true})
+            return navigator.mediaDevices.getUserMedia({audio: true, video:false});
         } catch(e) {
             ElMessage('浏览器不支持录音: ' + e);
             return Promise.reject();
@@ -66,7 +66,7 @@ const speechVoice = ()=>{
     })().then(stream => {
         const chunks = [];
         handler.recorder && handler.recorder.stop();
-        const recorder = handler.recorder || new MediaRecorder(stream,{mimeType:'audio/wav'});
+        const recorder = handler.recorder || new MediaRecorder(stream);
         recorder.ondataavailable = (event)=>{
             isRecording.value = true;
             chunks.push(event.data);
@@ -77,7 +77,8 @@ const speechVoice = ()=>{
             recorder.stop();
             recorder.onstop = async ()=> {
                 console.log('chunks[0].',chunks[0])
-                const ab = await chunks[0].arrayBuffer();
+                let ab = await chunks[0].arrayBuffer();
+                ab = audioContext.decodeAudioData(ab);
                 resolve(ab);
             }
         })
