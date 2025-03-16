@@ -12716,10 +12716,8 @@ const _sfc_main$4 = {
       ElMessage("touchend");
       handler.stop().then((audioBuffer) => {
         window.audioBuffer = audioBuffer;
-        const buffer = new Float32Array();
-        audioBuffer.copyFromChannel(buffer, 1, 0);
+        const buffer = audioBuffer.getChannelData(0);
         console.log(buffer);
-        console.log(new WaveFileLoader(buffer));
         ElMessage("download");
         let audio = new Blob([exportWAV16k(buffer)], { mimeType: "audio/wav" });
         const a = document.createElement("a");
@@ -12728,6 +12726,7 @@ const _sfc_main$4 = {
         document.body.appendChild(a);
         a.click();
         this.isRecording = false;
+        console.log(new WaveFileLoader(buffer));
         return;
       }).then(({ data }) => {
         this.records.push({
