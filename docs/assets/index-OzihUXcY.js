@@ -12637,25 +12637,23 @@ const _sfc_main$4 = {
         // content: '这里是<a target="_blank" href="https://github.com/taylorchen709/vue-chat">源码</a>'
       }
     ];
+    const getMedia = async () => {
+      if (handler.recorder) {
+        return handler.recorder;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      handler.recorder = new MediaRecorder(stream);
+      return handler.recorder;
+    };
     const speechVoice = () => {
       ElMessage("touchstart");
-      (() => {
-        try {
-          return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        } catch (e) {
-          ElMessage("浏览器不支持录音: " + e);
-          return Promise.reject();
-        }
-      })().then((stream) => {
+      getMedia().then((recorder) => {
         const chunks = [];
-        handler.recorder && handler.recorder.stop();
-        const recorder = handler.recorder || new MediaRecorder(stream);
+        recorder.stop();
         recorder.ondataavailable = (event) => {
           isRecording.value = true;
           chunks.push(event.data);
         };
-        recorder.start();
-        handler.recorder = recorder;
         handler.stop = () => new Promise(function(resolve2, reject) {
           recorder.stop();
           recorder.onstop = async () => {
@@ -12665,10 +12663,12 @@ const _sfc_main$4 = {
             resolve2(ab);
           };
         });
+        recorder.start();
       }).catch((err) => {
         console.log("获取麦克风权限失败", err);
         ElMessageBox.confirm("获取麦克风权限失败: " + err, "Error");
       });
+      return false;
     };
     const stopVoice = () => {
       ElMessage("touchend");
