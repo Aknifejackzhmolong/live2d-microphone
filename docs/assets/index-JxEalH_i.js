@@ -12715,7 +12715,9 @@ const _sfc_main$4 = {
     const stopVoice = () => {
       ElMessage("touchend");
       handler.stop().then((audioBuffer) => {
-        const buffer = audioContext.createBuffer(1, audioBuffer.length, audioBuffer.sampleRate);
+        window.audioBuffer = audioBuffer;
+        const buffer = new Float32Array();
+        audioBuffer.copyFromChannel(buffer, 1, 0);
         console.log(buffer);
         console.log(new WaveFileLoader(buffer));
         ElMessage("download");
