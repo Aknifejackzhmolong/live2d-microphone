@@ -77,6 +77,7 @@ const speechVoice = ()=>{
                 reader.readAsArrayBuffer(chunks[0]);
                 reader.onload = async (e)=>{
                     const audioBuffer = await audioContext.decodeAudioData(e.target.result);
+                    console.log(audioBuffer);
                     resolve(audioBuffer);
                 }
             }
@@ -93,8 +94,9 @@ const stopVoice = ()=>{
     // buffer is an AudioBuffer(Float32Array ArrayBuffer)
     handler.stop()
     .then((audioBuffer) => {
-        const buffer = audioBuffer.getChannelData(0);
-        console.log(audioBuffer,new WaveFileLoader(buffer));
+        const buffer = audioContext.createBuffer(1,audioBuffer.length,audioBuffer.sampleRate);
+        console.log(buffer);
+        console.log(new WaveFileLoader(buffer));
         ElMessage('download');
         let audio = new Blob([exportWAV16k(buffer)],{mimeType:'audio/wav'});
         const a = document.createElement('a');
