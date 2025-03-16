@@ -76,8 +76,8 @@ const speechVoice = ()=>{
                 console.log('chunks[0].',chunks[0]);
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(chunks[0]);
-                reader.onload = (e)=>{
-                    const ab = audioContext.decodeAudioData(e.target.result);
+                reader.onload = async (e)=>{
+                    const ab = await audioContext.decodeAudioData(e.target.result);
                     console.log('ab',ab);
                     resolve(ab);
                 }
