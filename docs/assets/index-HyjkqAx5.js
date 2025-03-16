@@ -12709,6 +12709,7 @@ const _sfc_main$4 = {
         });
       }).catch((e) => {
         ElMessage(e);
+        console.log(e);
       });
     };
     const handlecontextmenu = (e) => {

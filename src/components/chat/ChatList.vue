@@ -70,7 +70,7 @@ const speechVoice = ()=>{
             isRecording.value = true;
             chunks.push(event.data);
         };
-        handler.stop = () => new Promise(function(resolve,reject){
+        handler.stop = (() => new Promise(function(resolve,reject){
             recorder.stop();
             recorder.onstop = async ()=> {
                 console.log('chunks[0].',chunks[0]);
@@ -82,7 +82,7 @@ const speechVoice = ()=>{
                     resolve(ab);
                 }
             }
-        });
+        }));
         recorder.start();
     }).catch(err => {
         console.log('获取麦克风权限失败', err);
@@ -135,6 +135,7 @@ const stopVoice = ()=>{
         })
     }).catch(e=>{
         ElMessage(e);
+        console.log(e);
     });
 };
 const handlecontextmenu = (e)=>{
