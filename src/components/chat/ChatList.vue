@@ -101,7 +101,8 @@ const stopVoice = ()=>{
         let audio = new Blob([exportWAV16k(buffer)],{mimeType:'audio/wav'});
         const a = document.createElement('a');
         a.href = window.URL.createObjectURL(audio);
-        a.download = `record-${this.sampleRate}kHz.wav`;
+        // a.download = `record-${this.sampleRate}kHz.wav`;
+        a.download = `record.wav`;
         document.body.appendChild(a);
         a.click();
         this.isRecording = false
