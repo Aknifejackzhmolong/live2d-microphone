@@ -7199,6 +7199,45 @@ Object.assign(WaveFileLoader.prototype, {
     return buffer;
   }
 });
+function exportWAV16k(data) {
+  let deflateDataLength = parseInt(data.length / 3);
+  let deflateDataByteLength = deflateDataLength * 2;
+  const buffer = new ArrayBuffer(44 + deflateDataByteLength);
+  let file = new DataView(buffer);
+  let riffMark = "RIFF", waveMark = "WAVE", fmtMark = "fmt ", dataMark = "data";
+  file.setUint8(0, riffMark.charCodeAt(0));
+  file.setUint8(1, riffMark.charCodeAt(1));
+  file.setUint8(2, riffMark.charCodeAt(2));
+  file.setUint8(3, riffMark.charCodeAt(3));
+  file.setInt32(4, deflateDataByteLength + 36, true);
+  file.setUint8(8, waveMark.charCodeAt(0));
+  file.setUint8(9, waveMark.charCodeAt(1));
+  file.setUint8(10, waveMark.charCodeAt(2));
+  file.setUint8(11, waveMark.charCodeAt(3));
+  file.setUint8(12, fmtMark.charCodeAt(0));
+  file.setUint8(13, fmtMark.charCodeAt(1));
+  file.setUint8(14, fmtMark.charCodeAt(2));
+  file.setUint8(15, fmtMark.charCodeAt(3));
+  file.setInt32(16, 16, true);
+  file.setInt16(20, 1, true);
+  file.setInt16(22, 1, true);
+  file.setInt32(24, 16e3, true);
+  file.setInt32(28, 32e3, true);
+  file.setInt16(32, 2, true);
+  file.setInt16(34, 16, true);
+  file.setUint8(36, dataMark.charCodeAt(0));
+  file.setUint8(37, dataMark.charCodeAt(1));
+  file.setUint8(38, dataMark.charCodeAt(2));
+  file.setUint8(39, dataMark.charCodeAt(3));
+  file.setInt32(40, deflateDataByteLength, true);
+  let s;
+  for (let i = 0; i < deflateDataLength; i++) {
+    if (i * 3 + 1 < data.length) s = Math.max(-1, Math.min(1, data[3 * i + 1]));
+    else s = 0;
+    file.setInt16(44 + i * 2, s < 0 ? s * 32768 : s * 32767, true);
+  }
+  return buffer;
+}
 const configProviderContextKey = Symbol();
 const defaultNamespace = "el";
 const statePrefix = "is-";
@@ -12657,13 +12696,11 @@ const _sfc_main$4 = {
         handler.stop = () => new Promise(function(resolve2, reject) {
           recorder.stop();
           recorder.onstop = async () => {
-            console.log("chunks[0].", chunks[0]);
             const reader = new FileReader();
             reader.readAsArrayBuffer(chunks[0]);
             reader.onload = async (e) => {
-              const ab = await audioContext.decodeAudioData(e.target.result);
-              console.log("ab", ab);
-              resolve2(ab);
+              const audioBuffer = await audioContext.decodeAudioData(e.target.result);
+              resolve2(audioBuffer);
             };
           };
         });
@@ -12676,10 +12713,11 @@ const _sfc_main$4 = {
     };
     const stopVoice = () => {
       ElMessage("touchend");
-      handler.stop().then((buffer) => {
-        console.log(buffer, new WaveFileLoader(buffer));
+      handler.stop().then((audioBuffer) => {
+        const buffer = audioBuffer.getChannelData(0);
+        console.log(audioBuffer, new WaveFileLoader(buffer));
         ElMessage("download");
-        let audio = new Blob([buffer], { mimeType: "audio/wav" });
+        let audio = new Blob([exportWAV16k(buffer)], { mimeType: "audio/wav" });
         const a = document.createElement("a");
         a.href = window.URL.createObjectURL(audio);
         a.download = `record-${this.sampleRate}kHz.wav`;

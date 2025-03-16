@@ -73,13 +73,11 @@ const speechVoice = ()=>{
         handler.stop = (() => new Promise(function(resolve,reject){
             recorder.stop();
             recorder.onstop = async ()=> {
-                console.log('chunks[0].',chunks[0]);
                 const reader = new FileReader();
                 reader.readAsArrayBuffer(chunks[0]);
                 reader.onload = async (e)=>{
-                    const ab = await audioContext.decodeAudioData(e.target.result);
-                    console.log('ab',ab);
-                    resolve(ab);
+                    const audioBuffer = await audioContext.decodeAudioData(e.target.result);
+                    resolve(audioBuffer);
                 }
             }
         }));
@@ -94,10 +92,11 @@ const stopVoice = ()=>{
     ElMessage('touchend');
     // buffer is an AudioBuffer(Float32Array ArrayBuffer)
     handler.stop()
-    .then((buffer) => {
-        console.log(buffer,new WaveFileLoader(buffer));
+    .then((audioBuffer) => {
+        const buffer = audioBuffer.getChannelData(0);
+        console.log(audioBuffer,new WaveFileLoader(buffer));
         ElMessage('download');
-        let audio = new Blob([(buffer)],{mimeType:'audio/wav'});
+        let audio = new Blob([exportWAV16k(buffer)],{mimeType:'audio/wav'});
         const a = document.createElement('a');
         a.href = window.URL.createObjectURL(audio);
         a.download = `record-${this.sampleRate}kHz.wav`;
